@@ -28,9 +28,9 @@ const HeroSection = () => {
   ];
 
   return (
-    <div className="w-full">
+    <section className="w-full">
       <ImageCarousel images={heroImages} autoSlideInterval={4000} />
-    </div>
+    </section>
   );
 };
 
