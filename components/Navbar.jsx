@@ -26,18 +26,24 @@ const Navbar = ({ children }) => {
         </div>
         <ul className="flex justify-end items-center gap-4 p-4 text-xl">
           <li>
-            <Link href="#">
+            <button className="cursor-pointer p-0 flex justify-center items-center">
               <Icon source={icons.search} />
-            </Link>
+            </button>
           </li>
           <li>
-            <Link href="/cart">
+            <Link
+              className="cursor-pointer flex justify-center items-center"
+              href="/cart"
+            >
               <Icon source={icons.cart} />
             </Link>
           </li>
 
           <li>
-            <Link href="/profile">
+            <Link
+              className="cursor-pointer p-0 flex justify-center items-center"
+              href="/profile"
+            >
               <Icon source={icons.user} />
             </Link>
           </li>
