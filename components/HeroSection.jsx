@@ -1,31 +1,19 @@
 import React from "react";
 import ImageCarousel from "./ImageCarousel";
-import CarousalImg from "../public/assests/CarousalBag1.png";
+import { getCarouselImages } from "@/data/products";
 
 const HeroSection = () => {
-  // Hero carousel images data
-  const heroImages = [
-    {
-      src: CarousalImg,
-      alt: "Premium Nómada Bag Collection",
-      link: "/shop",
-    },
-    {
-      src: CarousalImg, // You can replace these with different images
-      alt: "Luxury Travel Bags",
-      link: "/shop/travel",
-    },
-    {
-      src: CarousalImg,
-      alt: "Handcrafted Leather Bags",
-      link: "/shop/leather",
-    },
-    {
-      src: CarousalImg,
-      alt: "Modern Design Bags",
-      link: "/shop/modern",
-    },
-  ];
+  // Get dedicated carousel images for hero section
+  const carouselImages = getCarouselImages();
+
+  // Transform carousel images to match ImageCarousel component format
+  const heroImages = carouselImages.map((image) => ({
+    src: image.src,
+    alt: image.alt,
+    link: image.link,
+    title: image.title,
+    subtitle: image.subtitle,
+  }));
 
   return (
     <section className="w-full">

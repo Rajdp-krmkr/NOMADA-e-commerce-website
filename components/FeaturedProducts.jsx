@@ -1,38 +1,11 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { products } from "@/data/products";
 
 const FeaturedProducts = () => {
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Karl Lagerfeld Paris",
-      image: "/assests/bags/bag_black.png",
-      price: "$199",
-      link: "/product/black-bag",
-    },
-    {
-      id: 2,
-      name: "Vivienne Westwood London",
-      image: "/assests/bags/bag_brown.png",
-      price: "$249",
-      link: "/product/brown-bag",
-    },
-    {
-      id: 3,
-      name: "Issey Miyake Tokyo",
-      image: "/assests/bags/bag_pitch.png",
-      price: "$229",
-      link: "/product/pitch-bag",
-    },
-    {
-      id: 4,
-      name: "Maison Margiela Milano",
-      image: "/assests/bags/bag_purple.png",
-      price: "$259",
-      link: "/product/purple-bag",
-    },
-  ];
+  // Get first 4 products as featured products
+  const featuredProducts = products.slice(0, 4);
 
   return (
     <section className="font-babas-neue px-4 py-8">
@@ -43,17 +16,17 @@ const FeaturedProducts = () => {
             key={product.id}
             className={` rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300`}
           >
-            <Link href={product.link}>
+            <Link href={`/product/${product.slug}`}>
               <div className="aspect-square relative overflow-hidden">
                 <Image
-                  src={product.image}
+                  src={product.images[0]}
                   alt={product.name}
                   width={600}
                   height={600}
                   className="object-center relative -top-1/2 -left-1/2 opacity-50 blur-3xl hover:scale-105 transition-transform duration-300 min-w-[600px]"
                 />
                 <Image
-                  src={product.image}
+                  src={product.images[0]}
                   alt={product.name}
                   fill
                   className="object-contain hover:scale-105 transition-transform duration-300"
@@ -61,7 +34,7 @@ const FeaturedProducts = () => {
               </div>
               <div className="p-3">
                 <h3 className="text-xl mb-1">{product.name}</h3>
-                <p className="text-base text-gray-600">{product.price}</p>
+                <p className="text-base text-gray-600">${product.price}</p>
               </div>
             </Link>
           </div>
