@@ -28,7 +28,7 @@ const BrandProgress = () => {
   return (
     <section className="font-babas-neue bg-white py-20 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 sticky top-[60px] z-10 py-4 bg-white">
           <h2 className="text-4xl md:text-5xl font-light mb-6 text-gray-900">
             Five Decades of Excellence
           </h2>

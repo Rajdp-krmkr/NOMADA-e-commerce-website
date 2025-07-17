@@ -13,10 +13,10 @@ export default function Home() {
     <>
       <HeroSection />
       <BrandShowcase />
-      <FeaturedProducts />
       <LuxuryStatement />
+      <FeaturedProducts />
       <PopularProducts />
-      <BrandProgress />
+      {/* <BrandProgress /> */}
       <Categories />
       <BrandVision />
     </>
