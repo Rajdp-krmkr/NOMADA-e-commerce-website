@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata = {
-  title: "NÓMADA - Authentication",
+  title: "NÓMADA - luxury handbags",
   description: "Sign in or sign up to NÓMADA luxury handbags",
 };
 
