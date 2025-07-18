@@ -20,7 +20,7 @@ const LoadingScreen = ({ onLoadingComplete }) => {
         document.body.style.overflow = "unset";
         onLoadingComplete();
       }, 1000); // 1 second for transition
-    }, 3000);
+    }, 1500);
 
     return () => {
       clearTimeout(timer);

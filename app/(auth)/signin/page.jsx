@@ -73,7 +73,7 @@ const SignInPage = () => {
     try {
       const result = await SignInWithEmail(formData.email, formData.password);
       console.log("Sign in result:", result);
-      
+
       if (result.user && !result.emailVerified) {
         showWarning(result.message, 8000);
         setIsLoading(false);
@@ -85,7 +85,7 @@ const SignInPage = () => {
         setIsLoggedin(true);
         setUser(result.user);
         showSuccess(result.message, 3000);
-        
+
         // Redirect to home page after showing success notification
         setTimeout(() => {
           router.push("/");
