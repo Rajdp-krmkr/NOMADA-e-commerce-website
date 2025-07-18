@@ -1,10 +1,14 @@
+"use client";
 import Link from "next/link";
-import React from "react";
+import React, { useContext } from "react";
 import Logo from "./Logo";
 import { icons } from "@/constant";
 import Icon from "./icon";
+import { UserContext } from "@/context/UserContext";
 
 const Navbar = ({ children }) => {
+  const { isLoggedin } = useContext(UserContext);
+  console.log("isLoggedin:", isLoggedin);
   const pages = [
     { name: "Home", href: "/" },
     { name: "Shop", href: "/shop" },
@@ -30,23 +34,46 @@ const Navbar = ({ children }) => {
               <Icon source={icons.search} />
             </button>
           </li>
-          <li>
-            <Link
-              className="cursor-pointer flex justify-center items-center"
-              href="/cart"
-            >
-              <Icon source={icons.cart} />
-            </Link>
-          </li>
+          {isLoggedin ? (
+            <>
+              <li>
+                <Link
+                  className="cursor-pointer flex justify-center items-center"
+                  href="/cart"
+                >
+                  <Icon source={icons.cart} />
+                </Link>
+              </li>
 
-          <li>
-            <Link
-              className="cursor-pointer p-0 flex justify-center items-center"
-              href="/profile"
-            >
-              <Icon source={icons.user} />
-            </Link>
-          </li>
+              <li>
+                <Link
+                  className="cursor-pointer p-0 flex justify-center items-center"
+                  href="/profile"
+                >
+                  <Icon source={icons.user} />
+                </Link>
+              </li>
+            </>
+          ) : (
+            <>
+              <li>
+                <Link
+                  className="cursor-pointer p-0 flex justify-center items-center"
+                  href="/signin"
+                >
+                  <span>Signin</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  className="cursor-pointer p-0 flex justify-center items-center"
+                  href="/signup"
+                >
+                  <span>Signup</span>
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
       </nav>
       <main className="mt-16 ">{children}</main>

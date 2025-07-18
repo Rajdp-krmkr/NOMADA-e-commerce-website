@@ -1,9 +1,26 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import { SignUpAndSignIn } from "@/lib/utils/authentication";
+import {
+  SignUpAndSignIn,
+  signUpAndSignInWithEmail,
+  SignUpWithEmail,
+} from "@/lib/utils/authentication";
+import { useRouter } from "next/navigation";
+import { createNewUserData } from "@/lib/utils/storeData";
+import { useNotification } from "@/hooks/useNotification";
+import NotificationModal from "@/components/NotificationModal";
 
 const SignUpPage = () => {
+  const router = useRouter();
+  const {
+    notification,
+    hideNotification,
+    showSuccess,
+    showError,
+    showWarning,
+  } = useNotification();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -76,18 +93,63 @@ const SignUpPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      showError("Please fix the form errors before submitting.");
+      return;
+    }
 
     setIsLoading(true);
 
-    // Simulate API call
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
       console.log("Sign up data:", formData);
-      // Redirect to welcome page or dashboard
-      window.location.href = "/signin";
+      const result = await SignUpWithEmail(
+        `${formData.firstName} ${formData.lastName}`,
+        formData.email,
+        formData.password
+      );
+      console.log("User signed up successfully: ", result);
+
+      // Show success message from Firebase
+      if (result.message) {
+        showSuccess(result.message, 5000); // Show for 5 seconds
+      }
+
+      console.log("Creating user data...");
+      await createNewUserData(result.user.uid, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        subscribeNewsletter: formData.subscribeNewsletter,
+      });
+
+      console.log("User data created successfully");
+
+      // Redirect after a delay to allow user to see the success message
+      setTimeout(() => {
+        router.replace("/");
+      }, 5000);
     } catch (error) {
       console.error("Sign up error:", error);
+
+      // Handle specific Firebase errors
+      let errorMessage = "An error occurred during sign up. Please try again.";
+
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage =
+          "This email is already registered. Please use a different email or try signing in.";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage =
+          "Password is too weak. Please choose a stronger password.";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Please enter a valid email address.";
+      } else if (error.code === "auth/network-request-failed") {
+        errorMessage =
+          "Network error. Please check your connection and try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      showError(errorMessage, 7000); // Show error for 7 seconds
     } finally {
       setIsLoading(false);
     }
@@ -385,6 +447,15 @@ const SignUpPage = () => {
           <p>© 2025 NÓMADA. All rights reserved.</p>
         </div>
       </div>
+
+      {/* Notification Modal */}
+      <NotificationModal
+        isVisible={notification.isVisible}
+        message={notification.message}
+        type={notification.type}
+        duration={notification.duration}
+        onClose={hideNotification}
+      />
     </div>
   );
 };
