@@ -1,5 +1,8 @@
 // Products data for the NÓMADA website
 
+import { db } from "@/lib/firebaseConfig";
+import { collection, getDocs, query, where } from "firebase/firestore";
+
 // Carousel images for hero section
 export const carouselImages = [
   {
@@ -334,36 +337,218 @@ export const products = [
 ];
 
 // Helper function to get product by slug
-export const getProductBySlug = (slug) => {
-  return products.find((product) => product.slug === slug);
+export const getProductBySlug = async (slug) => {
+  try {
+    // Validate slug parameter
+    if (!slug || typeof slug !== "string") {
+      console.log(`Invalid slug parameter:`, slug);
+      return { success: false, error: "Invalid slug parameter" };
+    }
+
+    const q = query(collection(db, "Products"), where("slug", "==", slug));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const productDoc = querySnapshot.docs[0];
+      const productData = { id: productDoc.id, ...productDoc.data() };
+      console.log(`Product found:`, productData);
+      return { success: true, item: productData };
+    }
+
+    console.log(`Product with slug "${slug}" not found`);
+    return { success: false, error: "Product not found" };
+  } catch (error) {
+    console.error("Error fetching product by slug:", error);
+    return { success: false, error: error.message };
+  }
 };
 
-// Helper function to get related products
-export const getRelatedProducts = (currentProductId, category, limit = 4) => {
-  return products
-    .filter(
-      (product) =>
-        product.id !== currentProductId && product.category === category
-    )
-    .slice(0, limit);
+// Helper function to get product by ID
+export const getProductById = async (id) => {
+  try {
+    // Validate and convert ID parameter
+    if (!id) {
+      console.log(`Invalid ID parameter:`, id);
+      return { success: false, error: "Invalid ID parameter" };
+    }
+
+    // Try to convert to number, fallback to string comparison
+    let numericId = parseInt(id);
+    if (isNaN(numericId)) {
+      // If not a number, try string comparison
+      const q = query(collection(db, "Products"), where("id", "==", id));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const productDoc = querySnapshot.docs[0];
+        const productData = { id: productDoc.id, ...productDoc.data() };
+        console.log(`Product found by string ID:`, productData);
+        return { success: true, item: productData };
+      }
+    } else {
+      // Try numeric comparison first
+      const q = query(collection(db, "Products"), where("id", "==", numericId));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const productDoc = querySnapshot.docs[0];
+        const productData = { id: productDoc.id, ...productDoc.data() };
+        console.log(`Product found by numeric ID:`, productData);
+        return { success: true, item: productData };
+      }
+    }
+
+    console.log(`Product with ID "${id}" not found`);
+    return { success: false, error: "Product not found" };
+  } catch (error) {
+    console.error("Error fetching product by ID:", error);
+    return { success: false, error: error.message };
+  }
 };
 
-// Helper function to get all products by category
-export const getProductsByCategory = (category) => {
-  return products.filter((product) => product.category === category);
+// Helper function to get related products - now fetches from Firebase
+export const getRelatedProducts = async (
+  currentProductId,
+  category,
+  limit = 4
+) => {
+  try {
+    // Validate parameters
+    if (!currentProductId || !category) {
+      console.log(`Invalid parameters for getRelatedProducts:`, {
+        currentProductId,
+        category,
+      });
+      return [];
+    }
+
+    const q = query(
+      collection(db, "Products"),
+      where("category", "==", category)
+    );
+    const querySnapshot = await getDocs(q);
+    let relatedProducts = [];
+
+    querySnapshot.forEach((doc) => {
+      const product = { id: doc.id, ...doc.data() };
+      // Exclude the current product
+      if (product.id !== currentProductId) {
+        relatedProducts.push(product);
+      }
+    });
+
+    // Limit the results
+    const limitedProducts = relatedProducts.slice(0, limit);
+    console.log(
+      `Found ${limitedProducts.length} related products for category: ${category}`
+    );
+    return limitedProducts;
+  } catch (error) {
+    console.error("Error fetching related products:", error);
+    return [];
+  }
 };
 
-// Helper function to get trending products
-export const getTrendingProducts = () => {
-  return products.filter((product) => product.trending);
+// Helper function to get all products by category - now fetches from Firebase
+export const getProductsByCategory = async (category) => {
+  try {
+    // Validate category parameter
+    if (!category || typeof category !== "string") {
+      console.log(`Invalid category parameter:`, category);
+      return [];
+    }
+
+    const q = query(
+      collection(db, "Products"),
+      where("category", "==", category)
+    );
+    const querySnapshot = await getDocs(q);
+    const products = [];
+
+    querySnapshot.forEach((doc) => {
+      products.push({ id: doc.id, ...doc.data() });
+    });
+
+    console.log(`Found ${products.length} products in category: ${category}`);
+    return products;
+  } catch (error) {
+    console.error("Error fetching products by category:", error);
+    return [];
+  }
+};
+
+// Helper function to get trending products - now fetches from Firebase
+export const getTrendingProducts = async () => {
+  try {
+    // Get all products first, then filter for trending ones
+    const querySnapshot = await getDocs(collection(db, "Products"));
+    const products = [];
+
+    querySnapshot.forEach((doc) => {
+      const productData = { id: doc.id, ...doc.data() };
+      // Only include products that have a trending field
+      if (
+        productData.trending &&
+        productData.trending !== null &&
+        productData.trending !== undefined
+      ) {
+        products.push(productData);
+      }
+    });
+
+    // Sort by trending rank
+    products.sort((a, b) => {
+      const rankA = parseInt(a.trending?.replace("#", "") || "999");
+      const rankB = parseInt(b.trending?.replace("#", "") || "999");
+      return rankA - rankB;
+    });
+
+    console.log(`Found ${products.length} trending products`);
+    return products;
+  } catch (error) {
+    console.error("Error fetching trending products:", error);
+    return [];
+  }
+};
+
+// Helper function to get all products - now fetches from Firebase
+export const getAllProducts = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "Products"));
+    const products = [];
+
+    querySnapshot.forEach((doc) => {
+      products.push({ id: doc.id, ...doc.data() });
+    });
+
+    console.log(`Found ${products.length} total products`);
+    return products;
+  } catch (error) {
+    console.error("Error fetching all products:", error);
+    return [];
+  }
 };
 
 // Helper function to get carousel images
-export const getCarouselImages = () => {
-  return carouselImages;
+export const getCarouselImages = async () => {
+  try {
+    // Return static carousel images (could be extended to fetch from Firebase later)
+    console.log(`Loaded ${carouselImages.length} carousel images`);
+    return carouselImages;
+  } catch (error) {
+    console.error("Error fetching carousel images:", error);
+    return [];
+  }
 };
 
 // Helper function to get featured carousel images
-export const getFeaturedCarouselImages = () => {
-  return carouselImages.filter((image) => image.featured);
+export const getFeaturedCarouselImages = async () => {
+  try {
+    const featured = carouselImages.filter((image) => image.featured);
+    console.log(`Loaded ${featured.length} featured carousel images`);
+    return featured;
+  } catch (error) {
+    console.error("Error fetching featured carousel images:", error);
+    return [];
+  }
 };
