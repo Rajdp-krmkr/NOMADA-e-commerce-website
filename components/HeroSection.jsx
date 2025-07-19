@@ -1,19 +1,45 @@
-import React from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import ImageCarousel from "./ImageCarousel";
 import { getCarouselImages } from "@/data/products";
 
 const HeroSection = () => {
-  // Get dedicated carousel images for hero section
-  const carouselImages = getCarouselImages();
+  const [heroImages, setHeroImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Transform carousel images to match ImageCarousel component format
-  const heroImages = carouselImages.map((image) => ({
-    src: image.src,
-    alt: image.alt,
-    link: image.link,
-    title: image.title,
-    subtitle: image.subtitle,
-  }));
+  
+  useEffect(() => {
+    const fetchCarouselImages = async () => {
+      try {
+        setIsLoading(true);
+        const carouselImages = await getCarouselImages();
+        // Transform carousel images to match ImageCarousel component format
+        const transformedImages = carouselImages.map((image) => ({
+          src: image.src,
+          alt: image.alt,
+          link: image.link,
+          title: image.title,
+          subtitle: image.subtitle,
+        }));
+        setHeroImages(transformedImages);
+      } catch (error) {
+        console.error("Error fetching carousel images:", error);
+        setHeroImages([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCarouselImages();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <section className="w-full h-96 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </section>
+    );
+  }
 
   return (
     <section className="w-full">

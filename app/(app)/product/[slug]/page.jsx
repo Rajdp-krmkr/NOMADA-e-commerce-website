@@ -362,7 +362,7 @@ const ProductPage = ({ params }) => {
                 {relatedProducts.map((relatedProduct) => (
                   <Link
                     key={relatedProduct.id}
-                    href={`/product/${relatedProduct.slug}`}
+                    href={`/product/${relatedProduct.id}`}
                   >
                     <div className="group cursor-pointer">
                       <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-4">

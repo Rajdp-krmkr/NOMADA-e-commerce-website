@@ -1,11 +1,40 @@
-import React from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getTrendingProducts } from "@/data/products";
 
 const PopularProducts = () => {
-  // Get trending products (popular products)
-  const popularProducts = getTrendingProducts();
+  const [popularProducts, setPopularProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPopularProducts = async () => {
+      try {
+        setIsLoading(true);
+        const products = await getTrendingProducts();
+        setPopularProducts(products);
+      } catch (error) {
+        console.error("Error fetching popular products:", error);
+        setPopularProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPopularProducts();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <section className="font-babas-neue px-4 py-8">
+        <h1 className="text-4xl text-center mb-8">Popular Products</h1>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="font-babas-neue px-4 py-8">
