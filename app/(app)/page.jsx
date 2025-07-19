@@ -6,6 +6,7 @@ import BrandShowcase from "@/components/BrandShowcase";
 import LuxuryStatement from "@/components/LuxuryStatement";
 import BrandProgress from "@/components/BrandProgress";
 import BrandVision from "@/components/BrandVision";
+// import AdminPanel from "@/components/AdminPanel";
 import Image from "next/image";
 
 export default function Home() {
@@ -19,6 +20,9 @@ export default function Home() {
       {/* <BrandProgress /> */}
       <Categories />
       <BrandVision />
+      
+      {/* Temporary Admin Panel for Product Management */}
+      {/* <AdminPanel /> */}
     </>
   );
 }

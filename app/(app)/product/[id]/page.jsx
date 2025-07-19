@@ -1,35 +1,129 @@
 "use client";
-import React, { useState, use } from "react";
+import React, { useState, use, useContext, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getProductBySlug, getRelatedProducts } from "@/data/products";
+import { getProductById, getRelatedProducts } from "@/data/products";
 import { notFound } from "next/navigation";
+import { addToCart } from "@/lib/utils/storeData";
+import { UserContext } from "@/context/UserContext";
+import { useNotification } from "@/hooks/useNotification";
+import NotificationModal from "@/components/NotificationModal";
 
 const ProductPage = ({ params }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("One Size");
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [product, setProduct] = useState(null);
+  const [isProductLoading, setIsProductLoading] = useState(true);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [isRelatedProductsLoading, setIsRelatedProductsLoading] =
+    useState(false);
+
+  const { user, isLoggedin } = useContext(UserContext);
+  const {
+    notification,
+    showNotification,
+    hideNotification,
+    showSuccess,
+    showError,
+    showWarning,
+  } = useNotification();
 
   const resolvedParams = use(params);
-  const product = getProductBySlug(resolvedParams.slug);
+  //changing here
 
-  if (!product) {
-    notFound();
-  }
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const product = await getProductBySlug(resolvedParams.slug);
+        if (!product.success) {
+          showError(product.error || "Product not found");
+        } else {
+          setProduct(product.item);
+        }
+      } catch (error) {
+        showError("Error loading product");
+        console.error("Product fetch error:", error);
+      } finally {
+        setIsProductLoading(false);
+      }
+    };
 
-  const relatedProducts = getRelatedProducts(product.id, product.category);
+    fetchProduct();
+  }, [resolvedParams.id, showError]);
+
+  // Fetch related products when product changes
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      if (product) {
+        setIsRelatedProductsLoading(true);
+        try {
+          const related = await getRelatedProducts(
+            product.id,
+            product.category
+          );
+          setRelatedProducts(related || []);
+        } catch (error) {
+          console.error("Related products fetch error:", error);
+          setRelatedProducts([]);
+        } finally {
+          setIsRelatedProductsLoading(false);
+        }
+      }
+    };
+
+    fetchRelatedProducts();
+  }, [product]);
 
   const sizes = ["One Size"]; // You can expand this based on product type
 
-  const handleAddToCart = () => {
-    // Add to cart functionality
-    console.log(`Added ${quantity} ${product.name} to cart`);
+  const handleAddToCart = async () => {
+    if (!isLoggedin || !user) {
+      showWarning("Please sign in to add items to cart");
+      return;
+    }
+
+    setIsAddingToCart(true);
+
+    try {
+      const result = await addToCart(
+        product.id,
+        product.slug,
+        quantity,
+        selectedSize,
+        user
+      );
+
+      if (result.success) {
+        showSuccess(result.message);
+      } else {
+        showError(result.error || "Failed to add item to cart");
+      }
+    } catch (error) {
+      showError("An error occurred while adding to cart");
+      console.error("Cart error:", error);
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   const handleBuyNow = () => {
     // Buy now functionality
     console.log(`Buy now: ${quantity} ${product.name}`);
   };
+
+  if (isProductLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <h1 className="text-3xl font-light text-gray-900">Loading...</h1>
+      </div>
+    );
+  }
+
+  // if (!product) {
+  //   notFound();
+  // }
 
   return (
     <div className="font-babas-neue min-h-screen bg-white">
@@ -195,10 +289,10 @@ const ProductPage = ({ params }) => {
             <div className="space-y-4">
               <button
                 onClick={handleAddToCart}
-                disabled={!product.inStock}
+                disabled={!product.inStock || isAddingToCart}
                 className="w-full bg-gray-900 text-white py-3 px-6 rounded-md hover:bg-gray-800 transition-colors duration-300 disabled:bg-gray-400"
               >
-                Add to Cart
+                {isAddingToCart ? "Adding..." : "Add to Cart"}
               </button>
               <button
                 onClick={handleBuyNow}
@@ -252,38 +346,53 @@ const ProductPage = ({ params }) => {
         </div>
 
         {/* Related Products */}
-        {relatedProducts.length > 0 && (
+        {(relatedProducts.length > 0 || isRelatedProductsLoading) && (
           <div className="mt-16">
             <h3 className="text-3xl font-light text-gray-900 mb-8 text-center">
               You May Also Like
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((relatedProduct) => (
-                <Link
-                  key={relatedProduct.id}
-                  href={`/product/${relatedProduct.slug}`}
-                >
-                  <div className="group cursor-pointer">
-                    <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-4">
-                      <Image
-                        src={relatedProduct.images[0]}
-                        alt={relatedProduct.name}
-                        width={300}
-                        height={300}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+            {isRelatedProductsLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {relatedProducts.map((relatedProduct) => (
+                  <Link
+                    key={relatedProduct.id}
+                    href={`/product/${relatedProduct.id}`}
+                  >
+                    <div className="group cursor-pointer">
+                      <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-4">
+                        <Image
+                          src={relatedProduct.images[0]}
+                          alt={relatedProduct.name}
+                          width={300}
+                          height={300}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <h4 className="font-medium text-gray-900 mb-1">
+                        {relatedProduct.name}
+                      </h4>
+                      <p className="text-gray-600">${relatedProduct.price}</p>
                     </div>
-                    <h4 className="font-medium text-gray-900 mb-1">
-                      {relatedProduct.name}
-                    </h4>
-                    <p className="text-gray-600">${relatedProduct.price}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Notification Modal */}
+      <NotificationModal
+        isVisible={notification.isVisible}
+        message={notification.message}
+        type={notification.type}
+        duration={notification.duration}
+        onClose={hideNotification}
+      />
     </div>
   );
 };

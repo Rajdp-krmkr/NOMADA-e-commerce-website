@@ -15,6 +15,8 @@ const UserContextProvider = ({ children }) => {
   const [isLoggedin, setIsLoggedin] = useState(false);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [cartProducts, setCartProducts] = useState([]);
+  const [isCartProductsLoading, setIsCartProductsLoading] = useState(true);
 
   useEffect(() => {
     CheckUserLoggedIn()
@@ -32,6 +34,25 @@ const UserContextProvider = ({ children }) => {
       });
   }, []);
 
+  useEffect(() => {
+    if (user != null) {
+      const cart = user.cart || [];
+      cart.forEach(async (elementId) => {
+        let product = await findCartItems(elementId);
+        if (product) {
+          setCartProducts((prevProducts) => [...prevProducts, product]);
+        } else {
+          setCartProducts((prevProducts) => [
+            ...prevProducts,
+            { id: elementId, name: "Unknown Product" },
+          ]);
+        }
+      });
+
+      setIsCartProductsLoading(false);
+    }
+  }, [user]);
+
   return (
     <UserContext.Provider
       value={{
@@ -41,6 +62,10 @@ const UserContextProvider = ({ children }) => {
         setUser,
         isLoading,
         setIsLoading,
+        cartProducts,
+        setCartProducts,
+        isCartProductsLoading,
+        setIsCartProductsLoading,
       }}
     >
       {children}
